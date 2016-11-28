@@ -60,7 +60,15 @@ entity ID is
            exe_memwritedata : out  STD_LOGIC_VECTOR (15 downto 0);
            id_exe_isLW : out  STD_LOGIC;
            if_flush_from_id : out  STD_LOGIC;
-           if_id_flush : out  STD_LOGIC);
+           if_id_flush : out  STD_LOGIC;
+			  
+			  ctr_regwrite_from_exe : in  STD_LOGIC;
+           ctr_regwritedata_from_exe : in  STD_LOGIC_VECTOR (15 downto 0);
+           ctr_regdst_from_exe : in  STD_LOGIC_VECTOR (3 downto 0);
+           ctr_isLW_from_exe : in  STD_LOGIC;
+           ctr_regwrite_from_mem : in  STD_LOGIC;
+           ctr_regwritedata_from_mem : in  STD_LOGIC_VECTOR (15 downto 0);
+           ctr_regdst_from_mem : in  STD_LOGIC_VECTOR (3 downto 0));
 end ID;
 
 architecture Behavioral of ID is
