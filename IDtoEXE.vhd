@@ -19,7 +19,7 @@ entity IDtoEXE is
 		in_exe_memtoreg:in std_logic;
 		
 		in_exe_regwrite: in std_logic;
-		id_exe_isLW：in std_logic
+		id_exe_isLW: in std_logic;
 		id_exe_regdst: in std_logic_vector(3 downto 0);
 		
 		out_exe_alu1_operand1: out std_logic_vector(15 downto 0); 
@@ -40,16 +40,16 @@ entity IDtoEXE is
   
 	shared variable	exe_alu1_oprand1 :  std_logic_vector(15 downto 0);
 	shared variable	exe_alu1_oprand2 :  std_logic_vector(15 downto 0);
-	shared variable	exe_alu1_opkind: in std_logic;
-	shared variable	exe_memwritedata : in std_logic_vector(15 downto 0);
-	shared variable	exe_regdst: in std_logic_vector(3 downto 0);
-	shared variable	exe_readno1: in std_logic_vector(3 downto 0);
-	shared variable	exe_readno2: in std_logic_vector(3 downto 0);
-	shared variable	exe_memwrite: in std_logic;
-	shared variable	exe_memtoreg:in std_logic;
-	shared variable	exe_regwrite: in std_logic;
-	shared variable	exe_isLW：in std_logic
-	shared variable exe_id_regdst: in std_logic_vector(3 downto 0);
+	shared variable	exe_alu1_opkind:  std_logic;
+	shared variable	exe_memwritedata :  std_logic_vector(15 downto 0);
+	shared variable	exe_regdst:  std_logic_vector(3 downto 0);
+	shared variable	exe_readno1:  std_logic_vector(3 downto 0);
+	shared variable	exe_readno2:  std_logic_vector(3 downto 0);
+	shared variable	exe_memwrite:  std_logic;
+	shared variable	exe_memtoreg: std_logic;
+	shared variable	exe_regwrite:  std_logic;
+	shared variable	exe_isLW: std_logic;
+	shared variable   exe_id_regdst:  std_logic_vector(3 downto 0);
 begin
 process (rst,clk)
 begin

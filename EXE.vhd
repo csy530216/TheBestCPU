@@ -22,6 +22,7 @@ port(
 	mem_wb_data : in std_logic_vector(15 downto 0);
 	mem_wb_regwrite : in std_logic;
 	mem_wb_regdst : in std_logic_vector(3 downto 0);
+	exe_isLW: in std_logic;
 	
 	mem_regwrite : out std_logic;
 	mem_regdst : out std_logic_vector(3 downto 0);
@@ -32,83 +33,36 @@ port(
 	if_wboraddr : out std_logic_vector(15 downto 0);
 	if_flush_from_exe : out std_logic
 );
+end EXE;
 
 architecture Behavioral of EXE is
-
+signal wboraddr: std_logic_vector(15 downto 0):=(others=>'0');
 begin  
-	if(rst ='0') then
-	exe_alu1_operand1="0000000000000000";
-	exe_alu1_operand2="0000000000000000";
-	exe_alu1_opkind="0000";
-	exe_regwrite='0';
-	exe_regdst="0000";
-	exe_memwrite='0';
-	exe_memwritedata="0000000000000000";
-	exe_memtoreg='0';
-	exe_readno1="0000";
-	exe_readno2="0000";
-	exe_mem_wboraddr="0000000000000000";
-	exe_mem_regwrite='0';
-	exe_mem_regdst="0000";
-	mem_wb_data="0000000000000000";
-	mem_wb_regwrite='0';
-	mem_wb_regdst="0000";
-	end if;
-	process(exe_alu1_operand1 , exe_alu1_operand2, exe_alu1_opkind)
-	begin
-	
-		Case exe_alu1_opkind is
-			when "0000" =>	-- ADD
-				mem_wboraddr <= exe_alu1_operand1 + exe_alu1_operand2;
-				
-			when "0001" =>	-- SUB
-				mem_wboraddr <= exe_alu1_operand1 - exe_alu1_operand2;
-				
-			when "0010" =>	-- AND
-				mem_wboraddr <= exe_alu1_operand1 and exe_alu1_operand2;
-				
-			when "0011" =>	-- OR
-				mem_wboraddr <= exe_alu1_operand1 or exe_alu1_operand2;
-				
-			when "0100" =>	-- SLL
-				mem_wboraddr <= to_stdlogicvector(to_bitvector(exe_alu1_operand1) sll position);
-				
-			when "0101" =>	-- SRA
-				mem_wboraddr <= to_stdlogicvector(to_bitvector(exe_alu1_operand1) sra position);
-				
-			when "0110" =>	-- CMP
-				if (exe_alu1_operand1 = exe_alu1_operand2) then
-					mem_wboraddr <= (Others => '0');
-				else
-					mem_wboraddr <= "0000000000000001";
-				end if;
-				
-			when "0111" =>	-- SLT
-				if (exe_alu1_operand1 < exe_alu1_operand2) then
-					mem_wboraddr <= "0000000000000001";
-				else
-					mem_wboraddr <= (Others => '0');
-				end if;
-				
-			when "1000" =>	-- CMPF
-				if (exe_alu1_operand1 = exe_alu1_operand2) then
-					mem_wboraddr <= "0000000000000001";
-					
-				else
-					mem_wboraddr <= (Others => '0');
-	
-				end if;
-				
-			when others=>	
-				mem_wboraddr <= "0000000000000000";
-		end case;   
+
+	wboraddr <= exe_alu1_operand1 + exe_alu1_operand2 when exe_alu1_opkind="0000" else -- ADD
+					exe_alu1_operand1 - exe_alu1_operand2 when exe_alu1_opkind="0001" else-- SUB
+					exe_alu1_operand1 and exe_alu1_operand2 when exe_alu1_opkind="0010"else 	-- AND
+					exe_alu1_operand1 or exe_alu1_operand2 when exe_alu1_opkind="0011" else	-- OR
+					(Others => '0') when exe_alu1_operand1 = exe_alu1_operand2 and exe_alu1_opkind="0110" else--CMP
+					"0000000000000001" when exe_alu1_operand1 /= exe_alu1_operand2 and exe_alu1_opkind="0110" else --CMP
+					not exe_alu1_operand1 when exe_alu1_opkind="1001" else --NOT
+					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sll 8) when exe_alu1_operand2 ="0000000000000000" and exe_alu1_opkind="0100" else --SLL
+					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sll CONV_INTEGER(exe_alu1_operand2)) when exe_alu1_opkind="0100"else--SLL
+					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sra 8) when exe_alu1_operand2 ="0000000000000000" and exe_alu1_opkind="0101" else --SRA
+					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sra CONV_INTEGER(exe_alu1_operand2)) when exe_alu1_opkind="0101" else --SRA
+					"0000000000000001" when exe_alu1_operand1 < exe_alu1_operand2 and exe_alu1_opkind="0111" else --SLT
+					(Others => '0') when exe_alu1_opkind="0111" else--SLT
+					"0000000000000000";
+								 
+		
+		 if_flush_from_exe <='1' when wboraddr(15)='1' and (exe_isLW='1' or exe_memwrite= '1') else
+									'0';
 		mem_regwrite <= exe_regwrite;
 		mem_regdst <= exe_regdst;
 		mem_memwrite <=exe_memwrite;
 		mem_memwritedata <= exe_memwritedata;
 		mem_memtoreg <=exe_memtoreg;
-		if_wboraddr<= mem_wboraddr;
-		
-	end process;
+		if_wboraddr<= wboraddr;
+		mem_wboraddr<=wboraddr;
 	
-	process
+ end Behavioral;
