@@ -39,8 +39,6 @@ entity ID is
            id_SP : in  STD_LOGIC_VECTOR (15 downto 0);
            id_T : in  STD_LOGIC_VECTOR (15 downto 0);
            id_RA : in  STD_LOGIC_VECTOR (15 downto 0);
-           id_isLW : in  STD_LOGIC;
-           id_regdst : in  STD_LOGIC_VECTOR (3 downto 0);
            rst : in  STD_LOGIC;
 			  
            exe_alu1_operand1 : out  STD_LOGIC_VECTOR (15 downto 0);
@@ -56,19 +54,21 @@ entity ID is
            if_branchjump_ctr : out  STD_LOGIC_VECTOR (1 downto 0);
            if_branch : out  STD_LOGIC_VECTOR (15 downto 0);
            if_jump : out  STD_LOGIC_VECTOR (15 downto 0);
-			  exe_memwrite : out  STD_LOGIC;
+		   exe_memwrite : out  STD_LOGIC;
            exe_memwritedata : out  STD_LOGIC_VECTOR (15 downto 0);
            id_exe_isLW : out  STD_LOGIC;
            if_flush_from_id : out  STD_LOGIC;
            if_id_flush : out  STD_LOGIC;
 			  
-			  ctr_regwrite_from_exe : in  STD_LOGIC;
-           ctr_regwritedata_from_exe : in  STD_LOGIC_VECTOR (15 downto 0);
-           ctr_regdst_from_exe : in  STD_LOGIC_VECTOR (3 downto 0);
-           ctr_isLW_from_exe : in  STD_LOGIC;
-           ctr_regwrite_from_mem : in  STD_LOGIC;
-           ctr_regwritedata_from_mem : in  STD_LOGIC_VECTOR (15 downto 0);
-           ctr_regdst_from_mem : in  STD_LOGIC_VECTOR (3 downto 0));
+		   id_regwrite_from_exe : in  STD_LOGIC;
+           id_regwritedata_from_exe : in  STD_LOGIC_VECTOR (15 downto 0);
+           id_regdst_from_exe : in  STD_LOGIC_VECTOR (3 downto 0);
+           id_isLW_from_exe : in  STD_LOGIC;
+           id_regwrite_from_mem : in  STD_LOGIC;
+           id_regwritedata_from_mem : in  STD_LOGIC_VECTOR (15 downto 0);
+           id_regdst_from_mem : in  STD_LOGIC_VECTOR (3 downto 0));
+		   
+		   
 end ID;
 
 architecture Behavioral of ID is
@@ -105,6 +105,11 @@ architecture Behavioral of ID is
 	
    signal readno1 : STD_LOGIC_VECTOR (3 downto 0) := "1111";
    signal readno2 : STD_LOGIC_VECTOR (3 downto 0) := "1111";
+   signal exe_alu1_operand1reg : STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
+   signal exe_alu1_operand2reg : STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
+   signal exe_alu1_operand1t : STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
+   signal exe_alu1_operand2t : STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
+   signal should_pause : STD_LOGIC := '0';
 begin
 	
 	reg_readno1(3) <= '0';
@@ -112,16 +117,16 @@ begin
 	reg_readno2(3) <= '0';
 	reg_readno2(2 downto 0) <= id_inst(7 downto 5);
 	
-	exe_alu1_operand1 <= id_readdata1 when id_inst(15 downto 11) = "01001" else	--ADDIU
+	exe_alu1_operand1t <= id_readdata1 when id_inst(15 downto 11) = "01001" else	--ADDIU
 	                     id_readdata1 when id_inst(15 downto 11) = "01000" else	--ADDIU3
 								id_SP when id_inst(15 downto 8) = "01100011" else	--ADDSP
 								id_readdata1 when id_inst(15 downto 11) = "11100" and id_inst(1 downto 0) = "01" else --ADDU
 								id_readdata1 when id_inst(15 downto 11) = "11101" and id_inst(4 downto 0) = "01100" else --AND
 								"0000000000000000" when id_inst(15 downto 11) = "00010" else --B
-								"0000000000000000" when id_inst(15 downto 11) = "00100" else --BEQZ
-								"0000000000000000" when id_inst(15 downto 11) = "00101" else --BNEZ
-								"0000000000000000" when id_inst(15 downto 8) = "01100000" else --BTEQZ
-								"0000000000000000" when id_inst(15 downto 8) = "01100001" else --BTNEZ
+								id_readdata1 when id_inst(15 downto 11) = "00100" else --BEQZ
+								id_readdata1 when id_inst(15 downto 11) = "00101" else --BNEZ
+								id_T when id_inst(15 downto 8) = "01100000" else --BTEQZ
+								id_T when id_inst(15 downto 8) = "01100001" else --BTNEZ
 								id_readdata1 when id_inst(15 downto 11) = "11101" and id_inst(4 downto 0) = "01010" else --CMP
 								id_pc + 2 when id_inst(15 downto 11) = "11101" and id_inst(7 downto 0) = "11000000" else --JALR
 								"0000000000000000" when id_inst(15 downto 11) = "11101" and id_inst(7 downto 0) = "00000000" else --JR
@@ -172,7 +177,7 @@ begin
 	
 	exe_readno1			<= readno1;
 
-	exe_alu1_operand2 <= std_logic_vector(resize(signed(id_inst(7 downto 0)), 16)) when id_inst(15 downto 11) = "01001" else	--ADDIU
+	exe_alu1_operand2t <= std_logic_vector(resize(signed(id_inst(7 downto 0)), 16)) when id_inst(15 downto 11) = "01001" else	--ADDIU
 	                     std_logic_vector(resize(signed(id_inst(3 downto 0)), 16)) when id_inst(15 downto 11) = "01000" else	--ADDIU3
 								std_logic_vector(resize(signed(id_inst(7 downto 0)), 16)) when id_inst(15 downto 8) = "01100011" else	--ADDSP
 								id_readdata2 when id_inst(15 downto 11) = "11100" and id_inst(1 downto 0) = "01" else --ADDU
@@ -212,8 +217,41 @@ begin
 								"1111";
 								
 	exe_readno2			<= readno2;
+
+	exe_alu1_opkind <= "0000" when id_inst(15 downto 11) = "01001" else	--ADDIU
+	                     "0000" when id_inst(15 downto 11) = "01000" else	--ADDIU3
+								"0000" when id_inst(15 downto 8) = "01100011" else	--ADDSP
+								"0000" when id_inst(15 downto 11) = "11100" and id_inst(1 downto 0) = "01" else --ADDU
+								"0010" when id_inst(15 downto 11) = "11101" and id_inst(4 downto 0) = "01100" else --AND
+								"0000" when id_inst(15 downto 11) = "00010" else --B
+								"0000" when id_inst(15 downto 11) = "00100" else --BEQZ
+								"0000" when id_inst(15 downto 11) = "00101" else --BNEZ
+								"0000" when id_inst(15 downto 8) = "01100000" else --BTEQZ
+								"0000" when id_inst(15 downto 8) = "01100001" else --BTNEZ
+								"0110" when id_inst(15 downto 11) = "11101" and id_inst(4 downto 0) = "01010" else --CMP
+								"0000" when id_inst(15 downto 11) = "11101" and id_inst(7 downto 0) = "11000000" else --JALR
+								"0000" when id_inst(15 downto 11) = "11101" and id_inst(7 downto 0) = "00000000" else --JR
+								"0000" when id_inst(15 downto 0) = "1110100000100000" else --JRRA
+								"0000" when id_inst(15 downto 11) = "01101" else --LI
+								"0000" when id_inst(15 downto 11) = "10011" else --LW
+								"0000" when id_inst(15 downto 11) = "10010" else --LW_SP
+								"0000" when id_inst(15 downto 11) = "11110" and id_inst(7 downto 0) = "00000000" else --MFIH
+								"0000" when id_inst(15 downto 11) = "11101" and id_inst(7 downto 0) = "01000000" else --MFPC
+								"0000" when id_inst(15 downto 11) = "11110" and id_inst(7 downto 0) = "00000001" else --MTIH
+								"0000" when id_inst(15 downto 8) = "01100100" and id_inst(4 downto 0) = "00000" else --MTSP
+								"1001" when id_inst(15 downto 11) = "11101" and id_inst(4 downto 0) = "01111" else --NOT
+								"0011" when id_inst(15 downto 11) = "11101" and id_inst(4 downto 0) = "01101" else --OR
+								"0100" when id_inst(15 downto 11) = "00110" and id_inst(1 downto 0) = "00" else --SLL
+								"0111" when id_inst(15 downto 11) = "01011" else --SLTUI
+								"0101" when id_inst(15 downto 11) = "00110" and id_inst(1 downto 0) = "11" else --SRA
+								"0001" when id_inst(15 downto 11) = "11100" and id_inst(1 downto 0) = "11" else --SUBU
+								"0000" when id_inst(15 downto 11) = "11011" else --SW
+								"0000" when id_inst(15 downto 8) = "01100010" else --SW_RS
+								"0000" when id_inst(15 downto 11) = "11010" else --SW_SP
+								"1111";
 								
-	exe_regwrite     	<= '1' when id_inst(15 downto 11) = "01001" else	--ADDIU
+	exe_regwrite     	<= '0' when should_pause = '1' else
+	'1' when id_inst(15 downto 11) = "01001" else	--ADDIU
 	                     '1' when id_inst(15 downto 11) = "01000" else	--ADDIU3
 								'1' when id_inst(15 downto 8) = "01100011" else	--ADDSP
 								'1' when id_inst(15 downto 11) = "11100" and id_inst(1 downto 0) = "01" else --ADDU
@@ -265,7 +303,8 @@ begin
 								'1' when id_inst(15 downto 11) = "10010" else --LW_SP
 								'0';
 								
-	exe_memwrite      <= '1' when id_inst(15 downto 11) = "11011" else --SW
+	exe_memwrite      <= '0' when should_pause = '1' else
+		'1' when id_inst(15 downto 11) = "11011" else --SW
 								'1' when id_inst(15 downto 8) = "01100010" else --SW_RS
 								'1' when id_inst(15 downto 11) = "11010" else --SW_SP
 								'0';
@@ -275,11 +314,12 @@ begin
 								id_readdata1 when id_inst(15 downto 11) = "11010" else --SW_SP
 								"0000000000000000";
 	
-	if_branchjump_ctr	<= "01" when id_inst(15 downto 11) = "00010" else --B
-								"01" when id_inst(15 downto 11) = "00100" and id_readdata1 = "0000000000000000" else --BEQZ
-								"01" when id_inst(15 downto 11) = "00101" and id_readdata1 /= "0000000000000000" else --BNEZ
-								"01" when id_inst(15 downto 8) = "01100000" and id_T = "0000000000000000" else --BTEQZ
-								"01" when id_inst(15 downto 8) = "01100001" and id_T /= "0000000000000000" else --BTNEZ
+	if_branchjump_ctr	<= "00" when should_pause = '0' else
+	"01" when id_inst(15 downto 11) = "00010" else --B
+								"01" when id_inst(15 downto 11) = "00100" and exe_alu1_operand1t = "0000000000000000" else --BEQZ
+								"01" when id_inst(15 downto 11) = "00101" and exe_alu1_operand1t /= "0000000000000000" else --BNEZ
+								"01" when id_inst(15 downto 8) = "01100000" and exe_alu1_operand1t = "0000000000000000" else --BTEQZ
+								"01" when id_inst(15 downto 8) = "01100001" and exe_alu1_operand1t /= "0000000000000000" else --BTNEZ
 								"10" when id_inst(15 downto 11) = "11101" and id_inst(7 downto 0) = "11000000" else --JALR
 								"10" when id_inst(15 downto 11) = "11101" and id_inst(7 downto 0) = "00000000" else --JR
 								"10" when id_inst(15 downto 0) = "1110100000100000" else --JRRA
@@ -297,8 +337,28 @@ begin
 								id_RA when id_inst(15 downto 0) = "1110100000100000" else --JRRA
 								"0000000000000000";
 								
-	if_id_flush			<= '1' when id_isLW = '1' and ( (id_regdst = readno1) or (id_regdst = readno2) ) else
-								'0';
 								
+								
+	--判断是否要用从exe段算出的数据
+	
+	exe_alu1_operand1t   <= id_regwritedata_from_exe when id_regwrite_from_exe = '1' and readno1 = id_regdst_from_exe else	
+							id_regwritedata_from_mem when id_regwrite_from_mem = '1' and readno1 = id_regdst_from_mem else
+							exe_alu1_operand1reg;
+							
+	exe_alu1_operand2t   <= id_regwritedata_from_exe when id_regwrite_from_exe = '1' and readno2 = id_regdst_from_exe else	
+							id_regwritedata_from_mem when id_regwrite_from_mem = '1' and readno2 = id_regdst_from_mem else
+							exe_alu1_operand2reg;
+							
+	exe_alu1_operand1 <= exe_alu1_operand1t;
+	exe_alu1_operand2 <= exe_alu1_operand2t;
+				
+	
+	should_pause <= '1' when id_regwrite_from_exe = '1' and (readno1 = id_regdst_from_exe or readno2 = id_regdst_from_exe) and id_isLW_from_exe = '1' else
+	'0';
+	
+	if_flush_from_id <= '1'  when 
+	
+	if_id_flush <= '1'  when id_regwrite_from_exe = '1' and (readno1 = id_regdst_from_exe or readno2 = id_regdst_from_exe) and id_isLW_from_exe = '1';
+	
 end Behavioral;
 
