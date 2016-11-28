@@ -57,49 +57,39 @@ port(
 end mem;
 
 architecture Behavioral of mem is
-type status is (s0, rm, tp, rp, wp, wm, nop, waitr1, waitr2, waitw1, waitw2);
+type status is (s0, rm, tp, rp, wp, wm);
 signal state:	status	:= s0;
 begin
 	ram1addr(17 downto 16) <= "00";
 	process(clk, rst)
-		variable stopAll:std_logic;
 	begin
 		if rst = '0' then
 			wb_regwrite <= '1';
-			stopAll <= '1';
 			ram1_en <= '0';
 			rdn <= '1';
-		elsif falling_edge(clk) then
+			wrn <= '1';
+			ram1_oe <= '1';
+			ram1_we <= '1';
+		elsif rising_edge(clk) then
 				wb_regwrite <= mem_regwrite;
 				wb_regdst <= mem_regdst;				
 				case state is
-					when waitr1 =>
-						state <= waitr2;
-					when waitr2 =>
-						ram1_data <= data_ram2_r;
-						wb_data <= data_ram2_r;
-						stopAll <= '1';
-						state <= nop;
-					when waitw1 =>
-						state <= waitw2;
-					when waitw2 =>
-						stopAll <= '1';
-						state <= nop;
 					when rp =>
 						rdn <= '1';
 						wb_data <= ram1_data;
 						state <= s0;
 					when rm =>
+						ram1_oe <= '0';
 						wb_data <= ram1_data;
 						state <= s0;
 					when tp =>
 						wb_data <= ram1_data;
 						state <= s0;
 					when wp =>
+						wrn <= '0';
 						state <= s0;
 					when wm =>
-						state <= s0;
-					when nop =>
+						ram1_we <= '0';
 						state <= s0;
 					
 					when s0 =>
@@ -114,10 +104,7 @@ begin
 								rdn <= '0';
 								ram1_en <= '1';
 								state <= rp;
-							elsif addr < "1000000000000000" then				--read ram2
-								stopAll := '0';
-								state <= waitr1;
-							else 												--read ram1
+							elsif addr > "0111111111111111" then				--read ram1
 								ram1_en <= '0';
 								ram1_addr(15 downto 0) <= mem_wboraddr;
 								ram1_data <= (others => 'Z');
@@ -129,59 +116,18 @@ begin
 								ram1_en <= '1';
 								ram1_data <= mem_memwritedata;
 								state <= wp;
-							elsif addr < "0010000000000000" then			--can not write 
-								state <= nop;
-							elsif addr < "1000000000000000" then				--write ram2
-								stopAll <= '0';
-								state <= waitw1;
-							else 											--write ram
+							elsif addr > "0001111111111111" then				--write ram1
 								ram1_en <= '0';
 								ram1_addr(15 downto 0) <= mem_wboraddr;
 								ram1_data <= mem_memwritedata;
 								state <= wm;
 							end if;
-						end if;
-						
-						if wb_in = '0' then
-							ram1_data(15 downto 0) <= mem_wboraddr;
-							wb_data <= mem_wboraddr;
-							state <= nop;
-						else 
-							state <= nop;
-						end if;
-					
+						end if;					
 					when others=>
 						state <= s0;
 				end case;
 			end if;
 	end process;
 	
-	process (clk, rst)
-	begin
-		if start = '1' then
-			null;
-		elsif rst = '0' then
-			wrn <= '1';
-			ram1_oe <= '1';
-			ram1_we <= '1';
-		elsif rising_edge(clk) then
-			case state is	
-				when rp =>
-				when wp =>
-					wrn <= '0';
-				when rm =>
-					ram1_oe <= '0';
-				when wm =>
-					ram1_we <= '0';
-				when s0=>
-					ram1_oe <= '1';
-					ram1_we <= '1';
-					wrn <= '1';
-				when others =>
-					null;
-			end case;
-		end if;
-		
-	end process;
 end Behavioral;
 
