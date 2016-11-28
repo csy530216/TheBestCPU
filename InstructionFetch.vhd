@@ -33,7 +33,8 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 
 entity InstructionFetch is
     Port ( if_branch : in  STD_LOGIC_VECTOR (15 downto 0);
-           if_branch_ctr : in  STD_LOGIC;
+	        if_jump: in  STD_LOGIC_VECTOR (15 downto 0);
+           if_branchjump_ctr : in  STD_LOGIC_VECTOR(1 downto 0);
            if_flush_from_id : in  STD_LOGIC;
            if_flush_from_exe : in  STD_LOGIC;
            if_wboraddr : in  STD_LOGIC_VECTOR (15 downto 0);
@@ -56,15 +57,18 @@ architecture Behavioral of InstructionFetch is
 	signal pc: STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
 	signal next_pc: STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
 begin
-	next_pc <= pc + 1             when if_branch_ctr = '0' else
-				  pc + 1 + if_branch when if_branch_ctr = '1' else
-				  "0000000000000000";
+	with if_branchjump_ctr select
+		next_pc <= pc + 1             when "00",
+					  pc + 1 + if_branch when "01",
+					  if_jump            when "10",
+					  "0000000000000000" when others;
 
 	id_pc <= pc;
 	
-	ram2_addr(15 downto 0) <= if_wboraddr when if_wboraddr(15) = '0' else		--MEM段在读指令
-									  pc          when if_wboraddr(15) = '1' else
-									  "0000000000000000";
+	with if_wboraddr(15) select
+		ram2_addr(15 downto 0) <= if_wboraddr when '0',		--MEM段在读指令
+										  pc          when '1',
+										  "0000000000000000" when others;
 	
 	ram2_addr(17 downto 16) <= "00";
 	ram2_en <= '0';
