@@ -54,7 +54,6 @@ entity ID is
            if_jump : out  STD_LOGIC_VECTOR (15 downto 0);
 		     exe_memwrite : out  STD_LOGIC;
            exe_memwritedata : out  STD_LOGIC_VECTOR (15 downto 0);
-           id_exe_isLW : out  STD_LOGIC;
            if_flush_from_id : out  STD_LOGIC;
            if_id_flush : out  STD_LOGIC;
 			  
@@ -290,10 +289,6 @@ begin
 								"1111";
 								
 	exe_memtoreg      <= '1' when id_inst(15 downto 11) = "10011" else --LW
-								'1' when id_inst(15 downto 11) = "10010" else --LW_SP
-								'0';
-								
-	id_exe_isLW       <= '1' when id_inst(15 downto 11) = "10011" else --LW
 								'1' when id_inst(15 downto 11) = "10010" else --LW_SP
 								'0';
 								

@@ -39,10 +39,7 @@ port(
 	in_wb_regdst:in std_logic_vector(3 downto 0); --写入哪个寄存器
 	out_wb_data:out std_logic_vector(15 downto 0); --写回寄存器的数据
 	out_wb_regwrite:out std_logic; --是否需要写入寄存器
-	out_wb_regdst:out std_logic_vector(3 downto 0); --写入哪个寄存器
-	mem_wb_data:out std_logic_vector(15 downto 0); --写回寄存器的数据
-	mem_wb_regwrite:out std_logic; --是否需要写入寄存器
-	mem_wb_regdst:out std_logic_vector(3 downto 0) --写入哪个寄存器
+	out_wb_regdst:out std_logic_vector(3 downto 0) --写入哪个寄存器
 );
 end memwb;
 
@@ -52,12 +49,9 @@ begin
 	process(clk)
 	begin
 		if (rising_edge(clk) and clk25 = '0') then
-			out_wb_data<=in_wb_data;
-			out_wb_regwrite<=in_wb_regwrite;
-			out_wb_regdst<=in_wb_regdst;
-			mem_wb_data<=in_wb_data;
-			mem_wb_regwrite<=in_wb_regwrite;
-			mem_wb_regdst<=in_wb_regdst;
+			out_wb_data <= in_wb_data;
+			out_wb_regwrite <= in_wb_regwrite;
+			out_wb_regdst <= in_wb_regdst;
 		end if;
 	end process;
 end Behavioral;

@@ -45,10 +45,7 @@ port(
 	out_mem_wboraddr:	out std_logic_vector(15 downto 0); --ALU1计算的结果
 	out_mem_memwrite: out std_logic;  --是否SW
 	out_mem_memwritedata: out std_logic_vector(15 downto 0);  --写入内存的内容
-	out_mem_memtoreg: out std_logic;  --写回的内容是来自ALU的输出还是访存得到的数据
-	exe_mem_wboraddr:	out std_logic_vector(15 downto 0); --ALU1计算的结果
-	exe_mem_regwrite: out std_logic; --是否需要写入寄存器
-	exe_mem_regdst: out std_logic_vector(3 downto 0) --写入哪个寄存器
+	out_mem_memtoreg: out std_logic  --写回的内容是来自ALU的输出还是访存得到的数据
 );
 end exemem;
 
@@ -64,9 +61,6 @@ begin
 			out_mem_memwrite <= in_mem_memwrite;
 			out_mem_memwritedata <= in_mem_memwritedata;
 			out_mem_memtoreg <= in_mem_memtoreg;
-			exe_mem_wboraddr <= in_mem_wboraddr;
-			exe_mem_regwrite <= in_mem_regwrite;
-			exe_mem_regdst <= in_mem_regdst;
 		end if;
 	end process;
 end Behavioral;

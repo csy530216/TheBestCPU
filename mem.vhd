@@ -50,35 +50,39 @@ port(
 	rdn : out  STD_LOGIC;
    wrn : out  STD_LOGIC;
 	ram1_addr:out std_logic_vector(17 downto 0);  --ram1的地址
-	wb_data:out std_logic_vector(15 downto 0);  --写回寄存器的数据（从mem_wboraddr，ram1_data和mem_inst中选择）
+	ram1_data:inout std_logic_vector(15 downto 0); --ram1的数据
 	wb_regwrite:out std_logic; --是否需要写入寄存器
+	wb_data:out std_logic_vector(15 downto 0);  --写回寄存器的数据（从mem_wboraddr，ram1_data和mem_inst中选择）
 	wb_regdst:out std_logic_vector(3 downto 0);  --写入哪个寄存器
-	ram1_data:inout std_logic_vector(15 downto 0) --ram1的数据
+	id_regwrite_from_mem: out  STD_LOGIC;
+   id_regwritedata_from_mem: out  STD_LOGIC_VECTOR (15 downto 0);
+   id_regdst_from_mem: out STD_LOGIC_VECTOR (3 downto 0)
 );
 end mem;
 
 architecture Behavioral of mem is
 type status is (rm, tp, rp, wp, wm);
-signal state:	status;
+signal state: status;
 begin
 	ram1_addr(17 downto 16) <= "00";
-	ram1_en <= '0';
-	rdn <= '1';
-	wrn <= '1';
-	ram1_oe <= '1';
-	ram1_we <= '1';
 		
 	wb_regwrite <= mem_regwrite;
 	wb_regdst <= mem_regdst;
-	with memtoreg select
-		wb_data <= mem_wboraddr when '0',
-					  ram1_data when '1',
-					  (others => '0') when others;
+	wb_data <= mem_inst when mem_wboraddr(15) = '0' else
+				  mem_wboraddr when mem_memtoreg = '0' else
+				  ram1_data when mem_memtoreg = '1' else
+				  "0000000000000000";
+				  
+	id_regwrite_from_mem <= mem_regwrite;
+	id_regdst_from_mem <= mem_regdst;
+	id_regwritedata_from_mem <= mem_inst when mem_wboraddr(15) = '0' else
+										 mem_wboraddr when mem_memtoreg = '0' else
+										 ram1_data when mem_memtoreg = '1' else
+										 "0000000000000000";
 	
 	process(clk, rst)
 	begin
 		if rst = '0' then
-			wb_regwrite <= '1';
 			ram1_en <= '0';
 			rdn <= '1';
 			wrn <= '1';
@@ -86,24 +90,19 @@ begin
 			ram1_we <= '1';
 		elsif rising_edge(clk) then
 			if clk25 = '1' then
-				wb_regwrite <= mem_regwrite;
-				wb_regdst <= mem_regdst;				
 				case state is
 					when rp =>
 						rdn <= '1';
-						wb_data <= ram1_data;
 					when rm =>
 						ram1_oe <= '0';
-						wb_data <= ram1_data;
 					when tp =>
-						wb_data <= ram1_data;
 					when wp =>
 						wrn <= '0';
 					when wm =>
 						ram1_we <= '0';
 				end case;
 			else				
-				if mem_regwrite = '0' then
+				if mem_memwrite = '0' then
 					if mem_wboraddr = "1011111100000001" then					--test port
 						ram1_data(0) <= (tbre and tsre);
 						ram1_data(1) <= data_ready;

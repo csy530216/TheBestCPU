@@ -48,11 +48,11 @@ begin
 		if (rst='0') then
 			reg_we <= '0';
 			reg_writeno <= "1111";
-			reg_write_data <= (others => '0');
+			reg_writedata <= (others => '0');
 		else
 			reg_we <= wb_regwrite;
 			reg_writeno <= wb_regdst;
-			reg_write_data <= wb_data;
+			reg_writedata <= wb_data;
 		end if;
 	end process;
 end Behavioral;

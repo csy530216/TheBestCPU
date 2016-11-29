@@ -9,7 +9,7 @@ entity IDtoEXE is
 		rst : in std_logic;
 		in_exe_alu1_operand1: in std_logic_vector(15 downto 0);
 		in_exe_alu1_operand2: in std_logic_vector(15 downto 0);
-		in_exe_alu1_opkind: in std_logic;
+		in_exe_alu1_opkind: in std_logic_vector(3 downto 0);
 				
 		in_exe_regwrite: in std_logic;
 		in_exe_regdst: in std_logic_vector(3 downto 0);
@@ -18,16 +18,18 @@ entity IDtoEXE is
 		in_exe_memwrite: in std_logic;
 		in_exe_memwritedata : in std_logic_vector(15 downto 0);
 		
+				
 		out_exe_alu1_operand1: out std_logic_vector(15 downto 0); 
 		out_exe_alu1_operand2: out std_logic_vector(15 downto 0);
-		out_exe_alu1_opkind: out std_logic;
+		out_exe_alu1_opkind: out std_logic_vector(3 downto 0);
 		
 		out_exe_regwrite: out std_logic;
 		out_exe_regdst: out std_logic_vector(3 downto 0);
 		out_exe_memtoreg: out std_logic;
 		
 		out_exe_memwrite: out std_logic;
-		out_exe_memwritedata: out std_logic_vector(15 downto 0))
+		out_exe_memwritedata: out std_logic_vector(15 downto 0));
+		
 end IDtoEXE;
  
 architecture Behavioral of IDtoEXE is
