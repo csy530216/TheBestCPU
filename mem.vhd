@@ -57,10 +57,16 @@ port(
 end mem;
 
 architecture Behavioral of mem is
-type status is (s0, rm, tp, rp, wp, wm);
-signal state:	status	:= s0;
+type status is (rm, tp, rp, wp, wm);
+signal state:	status;
 begin
 	ram1addr(17 downto 16) <= "00";
+	wb_regwrite <= '1';
+	ram1_en <= '0';
+	rdn <= '1';
+	wrn <= '1';
+	ram1_oe <= '1';
+	ram1_we <= '1';
 	process(clk, rst)
 	begin
 		if rst = '0' then
@@ -71,61 +77,53 @@ begin
 			ram1_oe <= '1';
 			ram1_we <= '1';
 		elsif rising_edge(clk) then
+			if clk25 = '1' then
 				wb_regwrite <= mem_regwrite;
 				wb_regdst <= mem_regdst;				
 				case state is
 					when rp =>
 						rdn <= '1';
 						wb_data <= ram1_data;
-						state <= s0;
 					when rm =>
 						ram1_oe <= '0';
 						wb_data <= ram1_data;
-						state <= s0;
 					when tp =>
 						wb_data <= ram1_data;
-						state <= s0;
 					when wp =>
 						wrn <= '0';
-						state <= s0;
 					when wm =>
 						ram1_we <= '0';
-						state <= s0;
+			else				
+				if mem_regwrite = '0' then
+					if addr = "1011111100000001" then					--test port
+						ram1_data(0) <= (tbre and tsre);
+						ram1_data(1) <= data_ready;
+						ram1_data(15 downto 2) <= (others => '0');
+						state <= tp;
+					elsif addr = "1011111100000000" then				--read port
+						ram1_data<= (others => 'Z');
+						rdn <= '0';
+						ram1_en <= '1';
+						state <= rp;
+					elsif addr > "0111111111111111" then				--read ram1
+						ram1_en <= '0';
+						ram1_addr(15 downto 0) <= mem_wboraddr;
+						ram1_data <= (others => 'Z');
+						state <= rm;
+					end if;
 					
-					when s0 =>
-						if mem_regwrite = '0' then
-							if addr = "1011111100000001" then					--test port
-								ram1_data(0) <= (tbre and tsre);
-								ram1_data(1) <= data_ready;
-								ram1_data(15 downto 2) <= (others => '0');
-								state <= tp;
-							elsif addr = "1011111100000000" then				--read port
-								ram1_data<= (others => 'Z');
-								rdn <= '0';
-								ram1_en <= '1';
-								state <= rp;
-							elsif addr > "0111111111111111" then				--read ram1
-								ram1_en <= '0';
-								ram1_addr(15 downto 0) <= mem_wboraddr;
-								ram1_data <= (others => 'Z');
-								state <= rm;
-							end if;
-							
-						else						
-							if addr = "1011111100000000" then				--write port
-								ram1_en <= '1';
-								ram1_data <= mem_memwritedata;
-								state <= wp;
-							elsif addr > "0001111111111111" then				--write ram1
-								ram1_en <= '0';
-								ram1_addr(15 downto 0) <= mem_wboraddr;
-								ram1_data <= mem_memwritedata;
-								state <= wm;
-							end if;
-						end if;					
-					when others=>
-						state <= s0;
-				end case;
+				else						
+					if addr = "1011111100000000" then				--write port
+						ram1_en <= '1';
+						ram1_data <= mem_memwritedata;
+						state <= wp;
+					elsif addr > "0001111111111111" then				--write ram1
+						ram1_en <= '0';
+						ram1_addr(15 downto 0) <= mem_wboraddr;
+						ram1_data <= mem_memwritedata;
+						state <= wm;
+					end if;
+				end if;					
 			end if;
 	end process;
 	
