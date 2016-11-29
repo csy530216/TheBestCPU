@@ -62,12 +62,19 @@ type status is (rm, tp, rp, wp, wm);
 signal state:	status;
 begin
 	ram1_addr(17 downto 16) <= "00";
-	wb_regwrite <= '1';
 	ram1_en <= '0';
 	rdn <= '1';
 	wrn <= '1';
 	ram1_oe <= '1';
 	ram1_we <= '1';
+		
+	wb_regwrite <= mem_regwrite;
+	wb_regdst <= mem_regdst;
+	with memtoreg select
+		wb_data <= mem_wboraddr when '0',
+					  ram1_data when '1',
+					  (others => '0') when others;
+	
 	process(clk, rst)
 	begin
 		if rst = '0' then

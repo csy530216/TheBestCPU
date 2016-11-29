@@ -46,8 +46,6 @@ entity ID is
            exe_alu1_opkind : out  STD_LOGIC_VECTOR (3 downto 0);
            reg_readno1 : out  STD_LOGIC_VECTOR (3 downto 0);
            reg_readno2 : out  STD_LOGIC_VECTOR (3 downto 0);
-           exe_readno1 : out  STD_LOGIC_VECTOR (3 downto 0);
-           exe_readno2 : out  STD_LOGIC_VECTOR (3 downto 0);
            exe_regwrite : out  STD_LOGIC;
            exe_regdst : out  STD_LOGIC_VECTOR (3 downto 0);
            exe_memtoreg : out  STD_LOGIC;
@@ -174,8 +172,6 @@ begin
 								"1000" when id_inst(15 downto 8) = "01100010" else --SW_RS
 								"1000" when id_inst(15 downto 11) = "11010" else --SW_SP
 								"1111";
-	
-	exe_readno1			<= readno1;
 
 	exe_alu1_operand2reg <= std_logic_vector(resize(signed(id_inst(7 downto 0)), 16)) when id_inst(15 downto 11) = "01001" else	--ADDIU
 	                     std_logic_vector(resize(signed(id_inst(3 downto 0)), 16)) when id_inst(15 downto 11) = "01000" else	--ADDIU3
@@ -216,8 +212,6 @@ begin
 								"0" & id_inst(7 downto 5) when id_inst(15 downto 11) = "11100" and id_inst(1 downto 0) = "11" else --SUBU
 								"1111";
 								
-	exe_readno2			<= readno2;
-
 	exe_alu1_opkind   <= "0000" when id_inst(15 downto 11) = "01001" else	--ADDIU
 	                     "0000" when id_inst(15 downto 11) = "01000" else	--ADDIU3
 								"0000" when id_inst(15 downto 8) = "01100011" else	--ADDSP
