@@ -33,7 +33,7 @@ architecture Behavioral of RegFile is
 	signal r5 : std_logic_vector(15 downto 0);
 	signal r6 : std_logic_vector(15 downto 0);
 	signal r7 : std_logic_vector(15 downto 0);
-	signal T : std_logic_vector(15 downto 0);
+	signal T  : std_logic_vector(15 downto 0);
 	signal IH : std_logic_vector(15 downto 0);
 	signal SP : std_logic_vector(15 downto 0);
 	signal RA : std_logic_vector(15 downto 0);
@@ -50,10 +50,10 @@ begin
 			r5 <= (others => '0');
 			r6 <= (others => '0');
 			r7 <= (others => '0');
-			T <= (others => '0');
+			T  <= (others => '0');
 			IH <= (others => '0');			
 			SP <= (others => '0');
-			RA <= (others =>'0');
+			RA <= (others => '0');
 		elsif (rising_edge(clk) and clk25 = '1' and reg_we = '1') then
 			case reg_writeno is 
 				when "0000" => r0 <= reg_writedata;
@@ -66,42 +66,35 @@ begin
 				when "0111" => r7 <= reg_writedata;
 				when "1000" => SP <= reg_writedata;
 				when "1001" => IH <= reg_writedata;
-				when "1010" => T <= reg_writedata;
-				when "1011" => RA <=reg_writedata;
+				when "1010" => T  <= reg_writedata;
+				when "1011" => RA <= reg_writedata;
 				when others =>
 			end case;
 		end if;
 	end process;
 	
-	process
-	begin 
-		case '0' & reg_readno1 is 
-			when "0000" => id_readdata1 <= r0;
-			when "0001" => id_readdata1 <= r1;
-			when "0010" => id_readdata1 <= r2;
-			when "0011" => id_readdata1 <= r3;
-			when "0100" => id_readdata1 <= r4;
-			when "0101" => id_readdata1 <= r5;
-			when "0110" => id_readdata1 <= r6;
-			when "0111" => id_readdata1 <= r7;
-			when others =>
-		end case;
-	end process;
+	with reg_readno1 select
+		id_readdata1 <= r0 when "0000",
+							 r1 when "0001",
+							 r2 when "0010",
+							 r3 when "0011",
+							 r4 when "0100",
+							 r5 when "0101",
+							 r6 when "0110",
+							 r7 when "0111",
+							 (others => '0') when others;
 	
-	process
-	begin 
-		case '0' & reg_readno2 is
-			when "0000" => id_readdata2 <= r0;
-			when "0001" => id_readdata2 <= r1;
-			when "0010" => id_readdata2 <= r2;
-			when "0011" => id_readdata2 <= r3;
-			when "0100" => id_readdata2 <= r4;
-			when "0101" => id_readdata2 <= r5;
-			when "0110" => id_readdata2 <= r6;
-			when "0111" => id_readdata2 <= r7;
-			when others =>
-		end case;
-	end process;
+	
+	with reg_readno2 select
+		id_readdata2 <= r0 when "0000",
+							 r1 when "0001",
+							 r2 when "0010",
+							 r3 when "0011",
+							 r4 when "0100",
+							 r5 when "0101",
+							 r6 when "0110",
+							 r7 when "0111",
+							 (others => '0') when others;
 	
 	id_SP <= SP;
 	id_IH <= IH;

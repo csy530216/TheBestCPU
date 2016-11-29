@@ -36,33 +36,34 @@ port(
 end EXE;
 
 architecture Behavioral of EXE is
-signal wboraddr: std_logic_vector(15 downto 0):=(others=>'0');
+signal wboraddr: std_logic_vector(15 downto 0) := (others=>'0');
 begin  
 
 	wboraddr <= exe_alu1_operand1 + exe_alu1_operand2 when exe_alu1_opkind="0000" else -- ADD
-					exe_alu1_operand1 - exe_alu1_operand2 when exe_alu1_opkind="0001" else-- SUB
-					exe_alu1_operand1 and exe_alu1_operand2 when exe_alu1_opkind="0010"else 	-- AND
+					exe_alu1_operand1 - exe_alu1_operand2 when exe_alu1_opkind="0001" else -- SUB
+					exe_alu1_operand1 and exe_alu1_operand2 when exe_alu1_opkind="0010" else -- AND
 					exe_alu1_operand1 or exe_alu1_operand2 when exe_alu1_opkind="0011" else	-- OR
-					(Others => '0') when exe_alu1_operand1 = exe_alu1_operand2 and exe_alu1_opkind="0110" else--CMP
+					"0000000000000000" when exe_alu1_operand1 = exe_alu1_operand2 and exe_alu1_opkind="0110" else--CMP
 					"0000000000000001" when exe_alu1_operand1 /= exe_alu1_operand2 and exe_alu1_opkind="0110" else --CMP
 					not exe_alu1_operand1 when exe_alu1_opkind="1001" else --NOT
 					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sll 8) when exe_alu1_operand2 ="0000000000000000" and exe_alu1_opkind="0100" else --SLL
-					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sll CONV_INTEGER(exe_alu1_operand2)) when exe_alu1_opkind="0100"else--SLL
+					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sll CONV_INTEGER(exe_alu1_operand2)) when exe_alu1_opkind="0100" else--SLL
 					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sra 8) when exe_alu1_operand2 ="0000000000000000" and exe_alu1_opkind="0101" else --SRA
 					to_stdlogicvector(to_bitvector(exe_alu1_operand1) sra CONV_INTEGER(exe_alu1_operand2)) when exe_alu1_opkind="0101" else --SRA
-					"0000000000000001" when exe_alu1_operand1 < exe_alu1_operand2 and exe_alu1_opkind="0111" else --SLT
-					(Others => '0') when exe_alu1_opkind="0111" else--SLT
+					"0000000000000001" when exe_alu1_operand1 < exe_alu1_operand2 and exe_alu1_opkind="0111" else --SLTUI
+					"0000000000000000" when exe_alu1_opkind="0111" else--SLTUI
 					"0000000000000000";
 								 
 		
-		 if_flush_from_exe <='1' when wboraddr(15)='1' and (exe_isLW='1' or exe_memwrite= '1') else
-									'0';
-		mem_regwrite <= exe_regwrite;
-		mem_regdst <= exe_regdst;
-		mem_memwrite <=exe_memwrite;
-		mem_memwritedata <= exe_memwritedata;
-		mem_memtoreg <=exe_memtoreg;
-		if_wboraddr<= wboraddr;
-		mem_wboraddr<=wboraddr;
+	if_flush_from_exe <= '1' when wboraddr(15)='1' and (exe_isLW='1' or exe_memwrite= '1') else
+							   '0';
+								
+	mem_regwrite <= exe_regwrite;
+	mem_regdst <= exe_regdst;
+	mem_memwrite <= exe_memwrite;
+	mem_memwritedata <= exe_memwritedata;
+	mem_memtoreg <= exe_memtoreg;
+	if_wboraddr <= wboraddr;
+	mem_wboraddr <= wboraddr;
 	
- end Behavioral;
+end Behavioral;

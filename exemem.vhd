@@ -31,6 +31,9 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity exemem is
 port(
+	clk: in std_logic;
+	clk25: in std_logic;
+	rst: in std_logic;
 	in_mem_regwrite: in std_logic;  --是否需要写入寄存器
 	in_mem_regdst:   in std_logic_vector(3 downto 0);  --写入哪个寄存器
 	in_mem_wboraddr: in std_logic_vector(15 downto 0); --ALU1计算的结果
@@ -52,17 +55,19 @@ end exemem;
 architecture Behavioral of exemem is
 
 begin
-	process(in_mem_regwrite)
+	process(clk)
 	begin
-		out_mem_regwrite<=in_mem_regwrite;
-		out_mem_regdst<=in_mem_regdst;
-		out_mem_wboraddr<=in_mem_wboraddr;
-		out_mem_memwrite<=in_mem_memwrite;
-		out_mem_memwritedata<=in_mem_memwritedata;
-		out_mem_memtoreg<=in_mem_memtoreg;
-		exe_mem_wboraddr<=in_mem_wboraddr;
-		exe_mem_regwrite<=in_mem_regwrite;
-		exe_mem_regdst<=in_mem_regdst;		
+		if (rising_edge(clk) and clk25 = '0') then
+			out_mem_regwrite <= in_mem_regwrite;
+			out_mem_regdst <= in_mem_regdst;
+			out_mem_wboraddr <= in_mem_wboraddr;
+			out_mem_memwrite <= in_mem_memwrite;
+			out_mem_memwritedata <= in_mem_memwritedata;
+			out_mem_memtoreg <= in_mem_memtoreg;
+			exe_mem_wboraddr <= in_mem_wboraddr;
+			exe_mem_regwrite <= in_mem_regwrite;
+			exe_mem_regdst <= in_mem_regdst;
+		end if;
 	end process;
 end Behavioral;
 

@@ -39,6 +39,7 @@ port(
 	mem_memtoreg:in std_logic; --写回的内容是来自ALU的输出还是访存得到的数据
 	mem_inst:in std_logic_vector(15 downto 0); --IF段读到的指令
 	clk:in std_logic;
+	clk25:in std_logic;
 	rst:in std_logic;
 	ram1_we:out std_logic;
 	ram1_oe:out std_logic;
@@ -47,12 +48,12 @@ port(
    tbre: in  STD_LOGIC;
    tsre: in  STD_LOGIC;
 	rdn : out  STD_LOGIC;
-   wrn : out  STD_LOGIC
+   wrn : out  STD_LOGIC;
 	ram1_addr:out std_logic_vector(17 downto 0);  --ram1的地址
 	wb_data:out std_logic_vector(15 downto 0);  --写回寄存器的数据（从mem_wboraddr，ram1_data和mem_inst中选择）
 	wb_regwrite:out std_logic; --是否需要写入寄存器
 	wb_regdst:out std_logic_vector(3 downto 0);  --写入哪个寄存器
-	ram1_data:inout std_logic_vector(15 downto 0); --ram1的数据
+	ram1_data:inout std_logic_vector(15 downto 0) --ram1的数据
 );
 end mem;
 
@@ -60,7 +61,7 @@ architecture Behavioral of mem is
 type status is (rm, tp, rp, wp, wm);
 signal state:	status;
 begin
-	ram1addr(17 downto 16) <= "00";
+	ram1_addr(17 downto 16) <= "00";
 	wb_regwrite <= '1';
 	ram1_en <= '0';
 	rdn <= '1';
@@ -93,19 +94,20 @@ begin
 						wrn <= '0';
 					when wm =>
 						ram1_we <= '0';
+				end case;
 			else				
 				if mem_regwrite = '0' then
-					if addr = "1011111100000001" then					--test port
+					if mem_wboraddr = "1011111100000001" then					--test port
 						ram1_data(0) <= (tbre and tsre);
 						ram1_data(1) <= data_ready;
 						ram1_data(15 downto 2) <= (others => '0');
 						state <= tp;
-					elsif addr = "1011111100000000" then				--read port
+					elsif mem_wboraddr = "1011111100000000" then				--read port
 						ram1_data<= (others => 'Z');
 						rdn <= '0';
 						ram1_en <= '1';
 						state <= rp;
-					elsif addr > "0111111111111111" then				--read ram1
+					elsif mem_wboraddr > "0111111111111111" then				--read ram1
 						ram1_en <= '0';
 						ram1_addr(15 downto 0) <= mem_wboraddr;
 						ram1_data <= (others => 'Z');
@@ -113,11 +115,11 @@ begin
 					end if;
 					
 				else						
-					if addr = "1011111100000000" then				--write port
+					if mem_wboraddr = "1011111100000000" then				  --write port
 						ram1_en <= '1';
 						ram1_data <= mem_memwritedata;
 						state <= wp;
-					elsif addr > "0001111111111111" then				--write ram1
+					elsif mem_wboraddr > "0001111111111111" then				--write ram1
 						ram1_en <= '0';
 						ram1_addr(15 downto 0) <= mem_wboraddr;
 						ram1_data <= mem_memwritedata;
@@ -125,7 +127,7 @@ begin
 					end if;
 				end if;					
 			end if;
+		end if;
 	end process;
 	
 end Behavioral;
-
